@@ -1,0 +1,36 @@
+# ArgoCD Application for NATS MCP Server
+# Deploy this to your ArgoCD namespace to enable GitOps
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nats-mcp
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Update this URL to your repository
+    repoURL: https://gitea.vilo.network/ViLoHouse/nats-mcp-server.git
+    targetRevision: main
+    path: config
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nats-mcp
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# Repository secret (if private repo)
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: nats-mcp-server
+#   namespace: argocd
+#   labels:
+#     argocd.argoproj.io/secret-type: repository
+# stringData:
+#   type: git
+#   url: https://gitea.vilo.network/ViLoHouse/nats-mcp-server.git
+#   username: <username>
+#   password: <token>

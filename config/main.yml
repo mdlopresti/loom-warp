@@ -1,0 +1,113 @@
+# NATS Server with JetStream for MCP Agent Communication
+# Based on structure from mealie deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nats-mcp
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: nats-mcp
+  labels:
+    app: nats
+  name: nats-config
+data:
+  nats.conf: |
+    # NATS Server Configuration
+    server_name: nats-mcp
+
+    # Client connections
+    port: 4222
+
+    # HTTP monitoring
+    http_port: 8222
+
+    # JetStream configuration
+    jetstream {
+      store_dir: /data/jetstream
+      max_memory_store: 1Gi
+      max_file_store: 10Gi
+    }
+
+    # Logging
+    debug: false
+    trace: false
+    logtime: true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: nats-mcp
+  labels:
+    app: nats
+  name: nats-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # storageClassName: standard  # Uncomment and adjust for your cluster
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: nats-mcp
+  labels:
+    app: nats
+  name: nats
+spec:
+  serviceName: nats
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nats
+  template:
+    metadata:
+      labels:
+        app: nats
+    spec:
+      containers:
+        - name: nats
+          image: nats:2.10-alpine
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-c"
+            - "/etc/nats/nats.conf"
+          ports:
+            - name: client
+              containerPort: 4222
+            - name: monitor
+              containerPort: 8222
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nats
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+      volumes:
+        - name: config
+          configMap:
+            name: nats-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: nats-data
