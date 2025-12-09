@@ -43,14 +43,14 @@ describe('parseDurationToNanos', () => {
 
 describe('generateNamespace', () => {
   it('should generate consistent namespace for same path', () => {
-    const ns1 = generateNamespace('/var/home/mike/project');
-    const ns2 = generateNamespace('/var/home/mike/project');
+    const ns1 = generateNamespace('/home/user/project');
+    const ns2 = generateNamespace('/home/user/project');
     expect(ns1).toBe(ns2);
   });
 
   it('should generate different namespaces for different paths', () => {
-    const ns1 = generateNamespace('/var/home/mike/project1');
-    const ns2 = generateNamespace('/var/home/mike/project2');
+    const ns1 = generateNamespace('/home/user/project1');
+    const ns2 = generateNamespace('/home/user/project2');
     expect(ns1).not.toBe(ns2);
   });
 

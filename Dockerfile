@@ -38,7 +38,14 @@ COPY schemas/ ./schemas/
 
 # Set environment variables
 ENV NODE_ENV=production
+# NATS_URL: Connection URL for NATS server
+# Default is for local development - override this in production deployments
+# Example: nats://nats-server:4222 or nats://user:password@nats-server:4222
 ENV NATS_URL=nats://localhost:4222
+
+# Security: Run as non-root user
+RUN chown -R node:node /app
+USER node
 
 # The MCP server uses stdio transport, so we need -i for interactive
 # This is handled by the entrypoint

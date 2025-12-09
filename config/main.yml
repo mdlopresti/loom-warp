@@ -68,10 +68,19 @@ spec:
       labels:
         app: nats
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
         - name: nats
           image: nats:2.10-alpine
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           args:
             - "-c"
             - "/etc/nats/nats.conf"

@@ -1,12 +1,12 @@
 {
-  "name": "nats-mcp-server",
+  "name": "@loom/warp",
   "version": "1.2.0",
-  "description": "NATS JetStream MCP server for agent-to-agent communication across Claude Code projects",
+  "description": "Warp - The messaging backbone for Loom multi-agent infrastructure",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "nats-mcp-server": "dist/index.js"
+    "warp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -21,6 +21,8 @@
     "prepublishOnly": "npm run build && npm run test"
   },
   "keywords": [
+    "loom",
+    "warp",
     "mcp",
     "nats",
     "jetstream",
@@ -28,13 +30,18 @@
     "claude",
     "ai",
     "messaging",
-    "communication"
+    "multi-agent",
+    "weaving"
   ],
   "author": "Michael LoPresti <mike@lopresti.org>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/mlopresti/nats-mcp-server.git"
+  },
+  "homepage": "https://github.com/mlopresti/nats-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/mlopresti/nats-mcp-server/issues"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -238,14 +238,14 @@ describe('validateRegistryEntry', () => {
 
 describe('generateProjectId', () => {
   it('should generate consistent projectId for same path', () => {
-    const id1 = generateProjectId('/var/home/mike/project');
-    const id2 = generateProjectId('/var/home/mike/project');
+    const id1 = generateProjectId('/home/user/project');
+    const id2 = generateProjectId('/home/user/project');
     expect(id1).toBe(id2);
   });
 
   it('should generate different projectIds for different paths', () => {
-    const id1 = generateProjectId('/var/home/mike/project1');
-    const id2 = generateProjectId('/var/home/mike/project2');
+    const id1 = generateProjectId('/home/user/project1');
+    const id2 = generateProjectId('/home/user/project2');
     expect(id1).not.toBe(id2);
   });
 
@@ -465,7 +465,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -479,7 +479,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -493,7 +493,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -501,7 +501,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -513,7 +513,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -521,7 +521,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -533,7 +533,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -550,7 +550,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
       username: 'testuser',
       capabilities: ['typescript', 'testing'],
@@ -569,7 +569,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
 
@@ -583,7 +583,7 @@ describe('createRegistryEntry', () => {
       agentType: 'developer',
       handle: 'TestAgent',
       hostname: 'test-host',
-      projectPath: '/var/home/mike/project',
+      projectPath: '/home/user/project',
       natsUrl: 'nats://localhost:4222',
     });
     const after = Date.now();

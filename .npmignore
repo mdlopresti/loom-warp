@@ -21,3 +21,8 @@ docs/
 
 # CI/CD
 .github/
+
+# Kubernetes/ArgoCD configs (contain internal URLs)
+config/
+*.argocd.yaml
+k8s/

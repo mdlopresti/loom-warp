@@ -51,9 +51,9 @@ spec:
 #   issuerRef:
 #     name: letsencrypt
 #     kind: ClusterIssuer
-#   commonName: "nats.vilo.network"
+#   commonName: "nats.example.com"
 #   dnsNames:
-#     - "nats.vilo.network"
+#     - "nats.example.com"
 # ---
 # apiVersion: networking.k8s.io/v1
 # kind: Ingress
@@ -66,10 +66,10 @@ spec:
 #   ingressClassName: nginx
 #   tls:
 #   - hosts:
-#     - nats.vilo.network
+#     - nats.example.com
 #     secretName: nats-monitor-tls
 #   rules:
-#   - host: nats.vilo.network
+#   - host: nats.example.com
 #     http:
 #       paths:
 #       - path: /

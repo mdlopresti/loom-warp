@@ -1,29 +1,35 @@
-# NATS MCP Server
+# Warp
 
-A generalized MCP (Model Context Protocol) server for agent-to-agent communication via NATS JetStream. Enables AI agents in Claude Code to communicate across projects with persistent, channel-based messaging.
+**The messaging backbone for Loom.**
+
+[![npm version](https://badge.fury.io/js/@loom/warp.svg)](https://www.npmjs.com/package/@loom/warp) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+
+Warp is the foundational MCP server for [Loom](../README.md). It gives AI agents in Claude Code the ability to communicate across projects and machines via NATS JetStream — persistent, reliable messaging with 16 purpose-built tools.
+
+> **⚠️ Alpha Software**: This project is under active development and is not yet production-ready. APIs may change without notice, and there may be bugs or missing features. Use at your own risk. Contributions and feedback are welcome!
+
+> **Warp** (noun): In weaving, the warp threads are the vertical threads held in tension on the loom — they form the foundation that the weft threads weave through.
 
 ## Features
 
-### Phase 1: Channel-Based Messaging
-- **Channel-based messaging**: Organize communication into configurable channels
-- **Message persistence**: All messages stored in NATS JetStream for history retrieval
-- **Project isolation**: Each project gets its own namespace to prevent message cross-contamination
-- **Configurable**: Define custom channels, retention policies, and settings per project
-- **Reliable**: Automatic reconnection, message acknowledgment, and graceful shutdown
+### Channel-Based Messaging
+- **Channels** for organized, topic-based communication
+- **Message persistence** via NATS JetStream for history retrieval
+- **Project isolation** with automatic namespace separation
+- **Configurable** retention policies and custom channels
 
-### Phase 2: Cross-Computer Agent Communication
-- **Agent Registry**: Register agents in a shared KV store for discovery across computers
-- **Agent Discovery**: Find other agents by type, capabilities, hostname, or project
-- **Direct Messaging**: Send messages directly to specific agents via personal inboxes
-- **Heartbeat System**: Automatic presence updates with stale agent detection
-- **Visibility Controls**: Configure agent visibility (private, project-only, user-only, public)
+### Cross-Computer Agent Discovery
+- **Agent Registry** in a shared KV store for discovery across machines
+- **Capability matching** to find agents with specific skills
+- **Direct Messaging** via personal inboxes with reliable delivery
+- **Heartbeat System** with automatic stale agent detection
+- **Visibility Controls**: private, project-only, user-only, or public
 
-### Phase 3: Work Distribution and Reliability
-- **Work Queues**: Capability-based work queues with competing consumers (load balancing)
-- **Work Handoff Protocol**: Structured message types for work-offer, work-claim, progress-update, work-complete, work-error
-- **Dead Letter Queue (DLQ)**: Failed work items are captured for debugging and retry
-- **Automatic Retries**: Configurable retry attempts before moving to DLQ
-- **Optional Coordinator**: Centralized work management pattern (optional, not required)
+### Work Distribution
+- **Work Queues** with competing consumers for load balancing
+- **Capability-based routing** sends work to qualified agents
+- **Dead Letter Queue** captures failed work for debugging and retry
+- **Automatic Retries** with configurable attempt limits
 
 ## Prerequisites
 
@@ -33,11 +39,14 @@ A generalized MCP (Model Context Protocol) server for agent-to-agent communicati
 ### Starting NATS with JetStream
 
 ```bash
-# macOS/Linux
-nats-server -js
+# Docker (easiest)
+docker run -d --name nats -p 4222:4222 nats:latest -js
 
-# Docker
-docker run -p 4222:4222 nats:latest -js
+# macOS
+brew install nats-server && nats-server -js
+
+# Linux
+nats-server -js
 ```
 
 ## Installation
@@ -45,60 +54,29 @@ docker run -p 4222:4222 nats:latest -js
 ### Global Installation (Recommended)
 
 ```bash
-npm install -g nats-mcp-server
+npm install -g @loom/warp
 ```
 
 ### Project-Level Installation
 
 ```bash
-npm install nats-mcp-server
+npm install @loom/warp
 ```
 
 ### Run without Installation
 
 ```bash
-npx nats-mcp-server
+npx @loom/warp
 ```
 
-### Docker Installation
+### Docker
 
 ```bash
 # Build the Docker image
-docker build -t nats-mcp-server:latest .
+docker build -t loom-warp:latest .
 
 # Or pull from registry (when published)
-# docker pull ghcr.io/your-org/nats-mcp-server:latest
-```
-
-Configure Claude Code to use Docker (`~/.claude/mcp.json`):
-
-```json
-{
-  "mcpServers": {
-    "nats-mcp": {
-      "command": "docker",
-      "args": ["run", "-i", "--rm", "--network=host", "nats-mcp-server:latest"],
-      "env": {
-        "NATS_URL": "nats://localhost:4222"
-      }
-    }
-  }
-}
-```
-
-### Docker Compose (Local Development)
-
-Start NATS with JetStream for local development:
-
-```bash
-# Start NATS
-docker-compose up -d
-
-# View logs
-docker-compose logs -f nats
-
-# Stop
-docker-compose down
+# docker pull ghcr.io/your-org/loom-warp:latest
 ```
 
 ## Configuration
@@ -110,8 +88,24 @@ Add to your `~/.claude/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "nats-mcp": {
-      "command": "nats-mcp-server",
+    "loom": {
+      "command": "warp",
+      "env": {
+        "NATS_URL": "nats://localhost:4222"
+      }
+    }
+  }
+}
+```
+
+### Docker Configuration
+
+```json
+{
+  "mcpServers": {
+    "loom": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "--network=host", "loom-warp:latest"],
       "env": {
         "NATS_URL": "nats://localhost:4222"
       }
@@ -122,7 +116,7 @@ Add to your `~/.claude/mcp.json`:
 
 ### Project Configuration
 
-Create a `.mcp-config.json` in your project root:
+Create a `.loom-config.json` in your project root:
 
 ```json
 {
@@ -154,17 +148,17 @@ If no configuration is provided, these default channels are created:
 - **parallel-work**: Coordination for parallel work among agents
 - **errors**: Error reporting and troubleshooting
 
-## Usage
+## Tools Reference
 
-### Available Tools
+### Identity Tools
 
 #### `set_handle`
 
 Set your agent identity for messages:
 
 ```
-Agent: set_handle("project-manager")
-Server: Handle set to: project-manager
+mcp__loom__set_handle("project-manager")
+→ Handle set to: project-manager
 ```
 
 #### `get_my_handle`
@@ -172,20 +166,22 @@ Server: Handle set to: project-manager
 Get your current handle:
 
 ```
-Agent: get_my_handle()
-Server: Your current handle: project-manager
+mcp__loom__get_my_handle()
+→ Your current handle: project-manager
 ```
+
+### Channel Tools
 
 #### `list_channels`
 
 List available channels:
 
 ```
-Agent: list_channels()
-Server: Available channels:
-- **planning**: Sprint planning and prioritization
-- **implementation**: Development work coordination
-- **review**: Code review discussions
+mcp__loom__list_channels()
+→ Available channels:
+  - **planning**: Sprint planning and prioritization
+  - **implementation**: Development work coordination
+  - **review**: Code review discussions
 ```
 
 #### `send_message`
@@ -193,8 +189,8 @@ Server: Available channels:
 Send a message to a channel:
 
 ```
-Agent: send_message("planning", "Starting Sprint 5 planning. Focus: API endpoints.")
-Server: Message sent to #planning by project-manager
+mcp__loom__send_message({ channel: "planning", message: "Starting Sprint 5 planning." })
+→ Message sent to #planning by project-manager
 ```
 
 #### `read_messages`
@@ -202,25 +198,27 @@ Server: Message sent to #planning by project-manager
 Read recent messages from a channel:
 
 ```
-Agent: read_messages("planning", limit=10)
-Server: Messages from #planning:
-
-[2025-01-15T10:00:00Z] **project-manager**: Starting Sprint 5 planning. Focus: API endpoints.
-[2025-01-15T10:05:00Z] **business-analyst**: Prioritizing user authentication requirements.
+mcp__loom__read_messages({ channel: "planning", limit: 10 })
+→ Messages from #planning:
+  [2025-01-15T10:00:00Z] **project-manager**: Starting Sprint 5 planning.
+  [2025-01-15T10:05:00Z] **analyst**: Prioritizing auth requirements.
 ```
 
-### Agent Registration & Discovery Tools
+### Registry Tools
 
 #### `register_agent`
 
 Register this agent in the global registry:
 
 ```
-Agent: register_agent(agentType="developer", capabilities=["coding", "testing"], visibility="project-only")
-Server: Agent registered successfully!
-- GUID: 550e8400-e29b-41d4-a716-446655440000
-- Handle: developer
-- Heartbeat: active (60s interval)
+mcp__loom__register_agent({
+  agentType: "developer",
+  capabilities: ["typescript", "testing"],
+  visibility: "project-only"
+})
+→ Agent registered successfully!
+  - GUID: 550e8400-e29b-41d4-a716-446655440000
+  - Heartbeat: active (60s interval)
 ```
 
 #### `discover_agents`
@@ -228,14 +226,12 @@ Server: Agent registered successfully!
 Find other agents in the registry:
 
 ```
-Agent: discover_agents(agentType="reviewer", status="online")
-Server: Found 2 agents:
-
-**code-reviewer** (reviewer)
-- GUID: 123e4567-e89b-12d3-a456-426614174000
-- Status: online
-- Capabilities: [code-review, security-audit]
-- Last seen: 2025-01-15T10:05:00Z
+mcp__loom__discover_agents({ capability: "typescript", status: "online" })
+→ Found 2 agents:
+  **code-reviewer** (reviewer)
+  - GUID: 123e4567-e89b-12d3-a456-426614174000
+  - Status: online
+  - Capabilities: [typescript, code-review]
 ```
 
 #### `get_agent_info`
@@ -243,15 +239,13 @@ Server: Found 2 agents:
 Get detailed information about a specific agent:
 
 ```
-Agent: get_agent_info(guid="123e4567-e89b-12d3-a456-426614174000")
-Server: ## Agent: code-reviewer
-
-| Field | Value |
-|-------|-------|
-| GUID | 123e4567-e89b-12d3-a456-426614174000 |
-| Type | reviewer |
-| Status | online |
-| Capabilities | code-review, security-audit |
+mcp__loom__get_agent_info({ guid: "123e4567-e89b-12d3-a456-426614174000" })
+→ Agent: code-reviewer
+  | Field | Value |
+  |-------|-------|
+  | Type | reviewer |
+  | Status | online |
+  | Capabilities | typescript, code-review |
 ```
 
 #### `update_presence`
@@ -259,10 +253,8 @@ Server: ## Agent: code-reviewer
 Update your agent's presence information:
 
 ```
-Agent: update_presence(status="busy", currentTaskCount=3)
-Server: Presence updated:
-- Status: online → busy
-- Current Tasks: 0 → 3
+mcp__loom__update_presence({ status: "busy", currentTaskCount: 3 })
+→ Presence updated: online → busy
 ```
 
 #### `deregister_agent`
@@ -270,10 +262,8 @@ Server: Presence updated:
 Deregister this agent from the registry:
 
 ```
-Agent: deregister_agent()
-Server: Agent deregistered successfully.
-- Status: offline
-- Heartbeat: stopped
+mcp__loom__deregister_agent()
+→ Agent deregistered. Heartbeat stopped.
 ```
 
 ### Direct Messaging Tools
@@ -283,11 +273,11 @@ Server: Agent deregistered successfully.
 Send a direct message to another agent:
 
 ```
-Agent: send_direct_message(recipientGuid="123e4567-e89b-12d3-a456-426614174000", message="Please review PR #42")
-Server: Message sent successfully!
-- Message ID: 789e0123-e89b-12d3-a456-426614174000
-- To: code-reviewer
-- Status: delivered
+mcp__loom__send_direct_message({
+  recipientGuid: "123e4567-e89b-12d3-a456-426614174000",
+  message: "Please review PR #42"
+})
+→ Message sent to code-reviewer
 ```
 
 #### `read_direct_messages`
@@ -295,22 +285,10 @@ Server: Message sent successfully!
 Read messages from your inbox:
 
 ```
-Agent: read_direct_messages(limit=5)
-Server: ## Direct Messages (2 messages)
-
----
-**From:** project-manager (guid)
-**Type:** text
-**Time:** 2025-01-15T10:00:00Z
-
-Please review PR #42 when you have time.
-
----
-**From:** developer (guid)
-**Type:** work-offer
-**Time:** 2025-01-15T10:05:00Z
-
-I've completed the API endpoints. Ready for review.
+mcp__loom__read_direct_messages({ limit: 5 })
+→ Direct Messages (2 messages):
+  From: project-manager | Type: text | Time: 10:00:00Z
+  "Please review PR #42 when you have time."
 ```
 
 ### Work Distribution Tools
@@ -320,31 +298,28 @@ I've completed the API endpoints. Ready for review.
 Publish work to a capability-based work queue:
 
 ```
-Agent: broadcast_work_offer(taskId="feature-123", capability="typescript", description="Implement user auth", priority=7)
-Server: Work item published successfully!
-- Work Item ID: 550e8400-e29b-41d4-a716-446655440000
-- Task ID: feature-123
-- Capability: typescript
-- Priority: 7
+mcp__loom__broadcast_work_offer({
+  taskId: "feature-123",
+  description: "Implement user authentication",
+  requiredCapability: "typescript",
+  priority: 7
+})
+→ Work published to typescript queue
 ```
 
 ### Dead Letter Queue Tools
 
 #### `list_dead_letter_items`
 
-List failed work items in the dead letter queue:
+List failed work items:
 
 ```
-Agent: list_dead_letter_items(limit=10)
-Server: ## Dead Letter Queue Items (1 item)
-
----
-**ID:** 550e8400-e29b-41d4-a716-446655440000
-**Task ID:** feature-123
-**Capability:** typescript
-**Failed At:** 2025-01-15T10:00:00Z
-**Attempts:** 3
-**Reason:** Worker crashed unexpectedly
+mcp__loom__list_dead_letter_items({ limit: 10 })
+→ Dead Letter Queue (1 item):
+  ID: 550e8400-...
+  Task: feature-123
+  Attempts: 3
+  Reason: Worker timeout
 ```
 
 #### `retry_dead_letter_item`
@@ -352,10 +327,11 @@ Server: ## Dead Letter Queue Items (1 item)
 Move a failed work item back to the work queue:
 
 ```
-Agent: retry_dead_letter_item(itemId="550e8400-e29b-41d4-a716-446655440000", resetAttempts=true)
-Server: Work item retried successfully!
-- Moved back to work queue: typescript
-- Attempts reset: yes
+mcp__loom__retry_dead_letter_item({
+  itemId: "550e8400-...",
+  resetAttempts: true
+})
+→ Work item retried. Moved back to queue.
 ```
 
 #### `discard_dead_letter_item`
@@ -363,8 +339,8 @@ Server: Work item retried successfully!
 Permanently remove a failed work item:
 
 ```
-Agent: discard_dead_letter_item(itemId="550e8400-e29b-41d4-a716-446655440000")
-Server: Work item discarded successfully.
+mcp__loom__discard_dead_letter_item({ itemId: "550e8400-..." })
+→ Work item discarded.
 ```
 
 ## Environment Variables
@@ -374,20 +350,77 @@ Server: Work item discarded successfully.
 | `NATS_URL` | `nats://localhost:4222` | NATS server connection URL |
 | `MCP_PROJECT_PATH` | Current directory | Override project path for config discovery |
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARN, ERROR) |
-| `LOG_FORMAT` | `json` | Log format (json, text) |
-| `WORKQUEUE_ACK_TIMEOUT` | `300000` | Work item acknowledgment timeout (ms) |
-| `WORKQUEUE_MAX_ATTEMPTS` | `3` | Max delivery attempts before moving to DLQ |
+| `WORKQUEUE_ACK_TIMEOUT` | `300000` | Work acknowledgment timeout (ms) |
+| `WORKQUEUE_MAX_ATTEMPTS` | `3` | Max delivery attempts before DLQ |
 | `WORKQUEUE_DLQ_TTL` | `604800000` | Dead letter queue TTL (ms, default 7 days) |
+
+## Cross-Computer Setup
+
+To enable agents on different computers to communicate:
+
+### 1. Deploy a Shared NATS Server
+
+```bash
+# Kubernetes (production)
+kubectl apply -f config/
+
+# Or use a cloud NATS service
+```
+
+### 2. Configure Each Computer
+
+Point all Warp instances to the same NATS URL:
+
+```json
+{
+  "mcpServers": {
+    "loom": {
+      "command": "warp",
+      "env": {
+        "NATS_URL": "nats://your-shared-nats-server:4222"
+      }
+    }
+  }
+}
+```
+
+### 3. Register and Discover
+
+Each agent calls `register_agent` → automatically discoverable across all computers.
+
+### Visibility Controls
+
+| Visibility | Who can discover |
+|------------|------------------|
+| `private` | Only the agent itself |
+| `project-only` | Agents in the same project (default) |
+| `user-only` | Agents with the same username |
+| `public` | All agents on the NATS server |
+
+## Kubernetes Deployment
+
+Deploy NATS with JetStream for production multi-computer setups.
+
+```bash
+# Apply manifests
+kubectl apply -f config/
+
+# Verify
+kubectl get pods -n loom
+kubectl get svc -n loom
+```
+
+See [config/README.md](config/README.md) for detailed deployment instructions.
 
 ## Troubleshooting
 
 ### NATS Connection Failed
 
 ```
-Error: NATS connection failed. Make sure NATS server with JetStream is running
+Error: NATS connection failed
 ```
 
-**Solution**: Start NATS with JetStream enabled:
+**Solution**: Ensure NATS is running with JetStream:
 ```bash
 nats-server -js
 ```
@@ -398,15 +431,15 @@ nats-server -js
 Error: JetStream not enabled
 ```
 
-**Solution**: Ensure you're using the `-js` flag when starting NATS.
+**Solution**: Start NATS with the `-js` flag.
 
 ### Invalid Channel Name
 
 ```
-Error: Invalid channel name. Must be lowercase alphanumeric with hyphens only
+Error: Invalid channel name
 ```
 
-**Solution**: Use channel names like `my-channel`, `work-items`, `sprint-1`.
+**Solution**: Use lowercase alphanumeric with hyphens only (`my-channel`, `sprint-1`).
 
 ## Development
 
@@ -417,91 +450,21 @@ npm install
 # Build
 npm run build
 
-# Run in development mode
+# Development mode
 npm run dev
 
 # Run tests
 npm test
 
-# Run tests with coverage
+# Test coverage
 npm run test:coverage
-
-# Lint
-npm run lint
 ```
 
-## Cross-Computer Agent Communication
+## Related Components
 
-To enable agents on different computers to communicate, they must all connect to the same NATS server.
-
-### Setup
-
-1. **Deploy a shared NATS server** (see Kubernetes Deployment below, or use a cloud NATS service)
-
-2. **Configure each computer's MCP** to use the shared NATS URL:
-
-```json
-{
-  "mcpServers": {
-    "nats-mcp": {
-      "command": "nats-mcp-server",
-      "env": {
-        "NATS_URL": "nats://your-shared-nats-server:4222"
-      }
-    }
-  }
-}
-```
-
-3. **Register agents** on each computer:
-   - Each agent calls `register_agent` with their type and capabilities
-   - Agents are automatically discoverable across all connected computers
-   - Heartbeats keep agents marked as online (60s interval)
-
-### Visibility Controls
-
-Control who can discover your agent:
-
-| Visibility | Who can see |
-|------------|-------------|
-| `private` | Only the agent itself |
-| `project-only` | Agents in the same project (default) |
-| `user-only` | Agents with the same username |
-| `public` | All agents on the NATS server |
-
-### Security Best Practices
-
-- Use TLS for NATS connections in production (`nats://` → `tls://`)
-- Configure NATS authentication (username/password or tokens)
-- Use network segmentation to limit NATS access
-- Consider separate NATS clusters for different environments
-
-## Kubernetes Deployment
-
-Deploy NATS with JetStream to Kubernetes for multi-computer agent communication.
-
-### Quick Start
-
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f config/
-
-# Verify deployment
-kubectl get pods -n nats-mcp
-kubectl get svc -n nats-mcp
-
-# Get external IP for NATS
-kubectl get svc nats-external -n nats-mcp
-```
-
-### ArgoCD (GitOps)
-
-```bash
-# Update repoURL in nats.argocd.yaml, then:
-kubectl apply -f nats.argocd.yaml
-```
-
-See [config/README.md](config/README.md) for detailed Kubernetes deployment instructions.
+- **[Loom](../README.md)** — The complete multi-agent infrastructure
+- **[Weft](../coordinator-system/README.md)** — Coordinator service for intelligent routing
+- **[Shuttle](../coordinator-system/shuttle/README.md)** — CLI for fleet management
 
 ## License
 
