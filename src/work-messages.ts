@@ -2,6 +2,7 @@
  * Work message validation and creation utilities
  */
 
+import { randomUUID } from 'crypto';
 import type {
   InboxMessage,
   WorkMessageType,
@@ -319,7 +320,7 @@ export function createWorkOfferMessage(
   payload: WorkOfferPayload
 ): InboxMessage {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     senderGuid,
     senderHandle,
     recipientGuid,
@@ -339,7 +340,7 @@ export function createWorkClaimMessage(
   payload: WorkClaimPayload
 ): InboxMessage {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     senderGuid,
     senderHandle,
     recipientGuid,
@@ -359,7 +360,7 @@ export function createWorkAcceptMessage(
   payload: WorkAcceptPayload
 ): InboxMessage {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     senderGuid,
     senderHandle,
     recipientGuid,
@@ -379,7 +380,7 @@ export function createWorkRejectMessage(
   payload: WorkRejectPayload
 ): InboxMessage {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     senderGuid,
     senderHandle,
     recipientGuid,
@@ -399,7 +400,7 @@ export function createProgressUpdateMessage(
   payload: ProgressUpdatePayload
 ): InboxMessage {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     senderGuid,
     senderHandle,
     recipientGuid,
@@ -419,7 +420,7 @@ export function createWorkCompleteMessage(
   payload: WorkCompletePayload
 ): InboxMessage {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     senderGuid,
     senderHandle,
     recipientGuid,
@@ -439,7 +440,7 @@ export function createWorkErrorMessage(
   payload: WorkErrorPayload
 ): InboxMessage {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     senderGuid,
     senderHandle,
     recipientGuid,
