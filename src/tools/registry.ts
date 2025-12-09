@@ -13,7 +13,7 @@ import { validateHandle } from './handle.js';
 import { startHeartbeat, stopHeartbeat } from '../heartbeat.js';
 import { createInboxStream, subscribeToInbox, unsubscribeFromInbox, getInboxSubject } from '../inbox.js';
 import { getJetStreamClient, getJetStreamManager } from '../nats.js';
-import { createWorkQueueStream, publishWorkItem, getWorkQueueSubject } from '../workqueue.js';
+import { createWorkQueueStream, publishWorkItem, getWorkQueueSubject, claimWorkItem } from '../workqueue.js';
 import { listDeadLetterItems, retryDeadLetterItem, discardDeadLetterItem } from '../dlq.js';
 
 const logger = createLogger('tools:registry');
@@ -248,6 +248,30 @@ export const registryTools: Tool[] = [
         },
       },
       required: ['taskId', 'description', 'requiredCapability'],
+    },
+  },
+  {
+    name: 'claim_work',
+    description:
+      'Claim work from a capability-based work queue. ' +
+      'Fetches the next available work item for the specified capability. ' +
+      'The agent must have the required capability registered. ' +
+      'Once claimed, the work item is removed from the queue and the agent is responsible for completing it.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        capability: {
+          type: 'string',
+          description: 'The capability to claim work for (e.g., "typescript", "code-review", "testing")',
+        },
+        timeout: {
+          type: 'number',
+          description: 'Maximum time in milliseconds to wait for work (default: 5000, max: 30000)',
+          minimum: 100,
+          maximum: 30000,
+        },
+      },
+      required: ['capability'],
     },
   },
   {
@@ -1714,6 +1738,125 @@ export async function handleDiscardDeadLetterItem(
     });
     return {
       content: [{ type: 'text', text: `Error: ${error.message}` }],
+      isError: true,
+    };
+  }
+}
+
+/**
+ * Handle claim_work tool
+ */
+export async function handleClaimWork(
+  args: Record<string, unknown>,
+  state: SessionState
+): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
+  const capability = args['capability'] as string;
+  const timeout = Math.min((args['timeout'] as number | undefined) ?? 5000, 30000);
+
+  // Validate required fields
+  if (!capability || capability.trim() === '') {
+    return {
+      content: [{ type: 'text', text: 'Error: capability is required and cannot be empty' }],
+      isError: true,
+    };
+  }
+
+  // Require agent to be registered
+  if (!state.agentGuid || !state.registeredEntry) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'Error: You must be registered to claim work. Use register_agent first.',
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  // Check if agent has the required capability
+  const agentCapabilities = state.registeredEntry.capabilities || [];
+  if (!agentCapabilities.includes(capability)) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Error: You do not have the "${capability}" capability registered. ` +
+            `Your capabilities: [${agentCapabilities.join(', ')}]. ` +
+            `Use update_presence to add capabilities, or register with the required capability.`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  try {
+    // Try to claim work from the queue
+    const workItem = await claimWorkItem(capability, timeout);
+
+    if (!workItem) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `No work available for capability "${capability}". The queue is empty or timed out waiting for work.`,
+          },
+        ],
+      };
+    }
+
+    logger.info('Work claimed successfully', {
+      workItemId: workItem.id,
+      taskId: workItem.taskId,
+      capability: workItem.capability,
+      claimedBy: state.agentGuid,
+    });
+
+    // Build response message with full work item details
+    const summary = [
+      'Work item claimed successfully!',
+      '',
+      '## Work Item Details',
+      '',
+      `| Field | Value |`,
+      `|-------|-------|`,
+      `| Work Item ID | ${workItem.id} |`,
+      `| Task ID | ${workItem.taskId} |`,
+      `| Capability | ${workItem.capability} |`,
+      `| Priority | ${workItem.priority ?? 5} |`,
+      `| Description | ${workItem.description} |`,
+      `| Offered By | ${workItem.offeredBy} |`,
+      `| Offered At | ${workItem.offeredAt} |`,
+      `| Attempts | ${workItem.attempts} |`,
+    ];
+
+    if (workItem.deadline) {
+      summary.push(`| Deadline | ${workItem.deadline} |`);
+    }
+
+    if (workItem.contextData) {
+      summary.push('', '## Context Data', '', '```json', JSON.stringify(workItem.contextData, null, 2), '```');
+    }
+
+    summary.push(
+      '',
+      '---',
+      '',
+      'You are now responsible for completing this work item. ' +
+      'If you cannot complete it, the work will not be automatically reassigned (it has been removed from the queue).'
+    );
+
+    return {
+      content: [{ type: 'text', text: summary.join('\n') }],
+    };
+  } catch (err) {
+    const error = err as Error;
+    logger.error('Failed to claim work', {
+      capability,
+      error: error.message,
+    });
+    return {
+      content: [{ type: 'text', text: `Error: Failed to claim work: ${error.message}` }],
       isError: true,
     };
   }

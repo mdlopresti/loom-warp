@@ -281,6 +281,102 @@ export async function subscribeToWorkQueue(
 }
 
 /**
+ * Claim a single work item from the queue (one-shot fetch)
+ * Returns the work item if available, null if no work is pending
+ * The message is acknowledged immediately upon successful claim
+ */
+export async function claimWorkItem(
+  capability: string,
+  timeoutMs: number = 5000
+): Promise<WorkItem | null> {
+  const js = getJetStreamClient();
+  const jsm = getJetStreamManager();
+  const streamName = `WORKQUEUE_${sanitizeCapability(capability)}`;
+  const consumerName = `worker-${sanitizeCapability(capability)}`;
+
+  try {
+    // Check if stream exists
+    try {
+      await jsm.streams.info(streamName);
+    } catch {
+      logger.debug('Work queue stream does not exist', { capability, stream: streamName });
+      return null;
+    }
+
+    // Ensure consumer exists
+    try {
+      await jsm.consumers.info(streamName, consumerName);
+    } catch {
+      // Create durable consumer with explicit ack
+      const consumerConfig = {
+        durable_name: consumerName,
+        ack_policy: AckPolicy.Explicit,
+        deliver_policy: DeliverPolicy.All,
+        ack_wait: DEFAULT_OPTIONS.ackTimeoutMs * 1_000_000, // nanoseconds
+        max_deliver: DEFAULT_OPTIONS.maxDeliveryAttempts,
+      };
+
+      await jsm.consumers.add(streamName, consumerConfig);
+      logger.info('Created work queue consumer for claim', {
+        consumer: consumerName,
+        stream: streamName,
+        capability,
+      });
+    }
+
+    // Get consumer and fetch single message
+    const consumer = await js.consumers.get(streamName, consumerName);
+
+    // Use fetch with expires to get a single message with timeout
+    const messages = await consumer.fetch({
+      max_messages: 1,
+      expires: timeoutMs,
+    });
+
+    // Process the single message
+    for await (const msg of messages) {
+      try {
+        const item = JSON.parse(msg.data.toString()) as WorkItem;
+
+        // Update attempts count from message info
+        const msgInfo = msg.info;
+        item.attempts = msgInfo?.deliveryCount || 1;
+
+        // Acknowledge the message (claim it)
+        msg.ack();
+
+        logger.info('Work item claimed', {
+          id: item.id,
+          taskId: item.taskId,
+          capability: item.capability,
+          attempts: item.attempts,
+        });
+
+        return item;
+      } catch (parseErr) {
+        const error = parseErr as Error;
+        logger.error('Failed to parse work item during claim', { error: error.message });
+        // Ack bad messages to avoid redelivery loops
+        msg.ack();
+      }
+    }
+
+    // No messages available
+    logger.debug('No work items available to claim', { capability });
+    return null;
+  } catch (err) {
+    const error = err as Error;
+    // Handle timeout gracefully
+    if (error.message?.includes('timeout') || error.message?.includes('expired')) {
+      logger.debug('Claim timeout, no work available', { capability });
+      return null;
+    }
+    logger.error('Failed to claim work item', { capability, error: error.message });
+    throw new Error(`Failed to claim work from ${capability} queue: ${error.message}`);
+  }
+}
+
+/**
  * Get pending work items count for a capability
  * Returns number of messages waiting in the queue
  */

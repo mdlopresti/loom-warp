@@ -36,6 +36,7 @@ import {
   handleSendDirectMessage,
   handleReadDirectMessages,
   handleBroadcastWorkOffer,
+  handleClaimWork,
   handleListDeadLetterItems,
   handleRetryDeadLetterItem,
   handleDiscardDeadLetterItem,
@@ -141,6 +142,9 @@ async function handleToolCall(
 
     case 'broadcast_work_offer':
       return handleBroadcastWorkOffer(args, sessionState);
+
+    case 'claim_work':
+      return handleClaimWork(args, sessionState);
 
     case 'list_dead_letter_items':
       return handleListDeadLetterItems(args);
