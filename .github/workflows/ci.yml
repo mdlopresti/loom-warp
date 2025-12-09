@@ -15,11 +15,7 @@ jobs:
         image: nats:latest
         ports:
           - 4222:4222
-        options: >-
-          --health-cmd "wget --no-verbose --tries=1 --spider http://localhost:8222/varz || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          - 8222:8222
 
     strategy:
       matrix:
