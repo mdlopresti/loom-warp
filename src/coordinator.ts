@@ -16,7 +16,7 @@ import { randomUUID } from 'crypto';
 import { createLogger } from './logger.js';
 import { listRegistryEntries } from './kv.js';
 import { isVisibleTo, type Requester } from './registry.js';
-import type { RegistryEntry, WorkItem, InboxMessage } from './types.js';
+import type { RegistryEntry, WorkItem } from './types.js';
 import { publishWorkItem, createWorkQueueStream } from './workqueue.js';
 import { moveToDeadLetter } from './dlq.js';
 

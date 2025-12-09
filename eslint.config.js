@@ -20,6 +20,10 @@ export default [
         clearTimeout: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
+        TextDecoder: 'readonly',
+        TextEncoder: 'readonly',
+        crypto: 'readonly',
+        NodeJS: 'readonly',
       },
     },
     plugins: {

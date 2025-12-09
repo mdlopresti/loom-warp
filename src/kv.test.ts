@@ -148,8 +148,6 @@ describe('KV Store', () => {
  * Start NATS first: nats-server -js
  */
 describe.skip('KV Store Integration Tests', () => {
-  const testBucketName = 'test-agent-registry';
-
   beforeEach(async () => {
     resetBucket();
     // Would need to connect to NATS first

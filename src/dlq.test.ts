@@ -14,7 +14,7 @@ import {
   DLQ_SUBJECT,
 } from './dlq.js';
 import { createWorkQueueStream, publishWorkItem, subscribeToWorkQueue } from './workqueue.js';
-import type { WorkItem, DLQItem } from './types.js';
+import type { WorkItem } from './types.js';
 
 // Test utilities
 const TEST_NATS_URL = process.env.NATS_URL || 'nats://localhost:4222';

@@ -441,11 +441,11 @@ describe('Coordinator', () => {
         capability: 'typescript',
         description: 'Task 2',
       });
-      const id3 = await coordinator.submitWork({
+      void (await coordinator.submitWork({
         taskId: 'task-3',
         capability: 'typescript',
         description: 'Task 3',
-      });
+      }));
 
       await coordinator.recordClaim(id1, 'worker-1');
       await coordinator.recordClaim(id2, 'worker-2');

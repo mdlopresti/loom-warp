@@ -292,7 +292,6 @@ export async function retryDeadLetterItem(id: string, resetAttempts = false): Pr
  */
 export async function discardDeadLetterItem(id: string): Promise<void> {
   const jsm = getJetStreamManager();
-  const js = getJetStreamClient();
 
   try {
     // Get stream info

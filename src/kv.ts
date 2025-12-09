@@ -2,7 +2,7 @@
  * NATS JetStream KV Store integration for agent registry
  */
 
-import type { KV, KvEntry, KvWatchOptions } from 'nats';
+import type { KV, KvWatchOptions } from 'nats';
 import { StorageType, DiscardPolicy } from 'nats';
 import { getJetStreamManager, getConnection } from './nats.js';
 import { createLogger } from './logger.js';
