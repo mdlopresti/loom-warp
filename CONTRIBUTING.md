@@ -1,6 +1,6 @@
-# Contributing to NATS MCP Server
+# Contributing to Loom Warp
 
-Thank you for your interest in contributing to the NATS MCP Server! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Loom Warp! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -38,8 +38,8 @@ We welcome contributions in many forms:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-org/nats-mcp-server.git
-   cd nats-mcp-server
+   git clone https://github.com/mdlopresti/loom-warp.git
+   cd loom-warp
    ```
 
 2. Install dependencies:
@@ -94,9 +94,9 @@ The project includes several npm scripts to streamline development:
    ```json
    {
      "mcpServers": {
-       "nats-mcp": {
+       "loom-warp": {
          "command": "node",
-         "args": ["/path/to/nats-mcp-server/dist/index.js"],
+         "args": ["/path/to/loom-warp/dist/index.js"],
          "env": {
            "NATS_URL": "nats://localhost:4222",
            "LOG_LEVEL": "DEBUG"
@@ -284,7 +284,7 @@ When reporting a bug, include:
 5. **Environment**:
    - OS and version
    - Node.js version
-   - NATS MCP Server version
+   - Loom Warp version
    - NATS server version
 6. **Logs**: Relevant error messages or logs (set `LOG_LEVEL=DEBUG`)
 7. **Configuration**: Your MCP configuration (redact sensitive data)
@@ -310,7 +310,7 @@ No messages are delivered to the agent.
 ## Environment
 - OS: macOS 14.0
 - Node.js: 18.17.0
-- NATS MCP Server: 1.2.0
+- Loom Warp: 1.2.0
 - NATS Server: 2.28.2
 
 ## Logs
@@ -322,8 +322,8 @@ No messages are delivered to the agent.
 ```json
 {
   "mcpServers": {
-    "nats-mcp": {
-      "command": "nats-mcp-server",
+    "loom-warp": {
+      "command": "warp",
       "env": {
         "NATS_URL": "nats://localhost:4222"
       }
@@ -350,4 +350,4 @@ If you have questions about contributing, feel free to:
 - Reach out to the maintainer at mike@lopresti.org
 - Check the README for general usage questions
 
-Thank you for contributing to NATS MCP Server!
+Thank you for contributing to Loom Warp!

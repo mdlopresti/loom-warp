@@ -1,6 +1,6 @@
 # NATS Kubernetes Deployment
 
-This directory contains Kubernetes manifests for deploying NATS with JetStream for the NATS MCP Server.
+This directory contains Kubernetes manifests for deploying NATS with JetStream for Loom Warp.
 
 ## Prerequisites
 
@@ -19,8 +19,8 @@ This directory contains Kubernetes manifests for deploying NATS with JetStream f
 kubectl apply -f config/
 
 # Verify deployment
-kubectl get pods -n nats-mcp
-kubectl get svc -n nats-mcp
+kubectl get pods -n loom
+kubectl get svc -n loom
 ```
 
 ### ArgoCD Deployment
@@ -70,7 +70,7 @@ Once deployed, configure your MCP servers to connect:
 
 ```bash
 # Get external IP (LoadBalancer)
-kubectl get svc nats-external -n nats-mcp
+kubectl get svc nats-external -n loom
 
 # Example: nats://10.0.0.100:4222
 ```
@@ -80,8 +80,8 @@ Update Claude Code configuration:
 ```json
 {
   "mcpServers": {
-    "nats-mcp": {
-      "command": "nats-mcp-server",
+    "loom-warp": {
+      "command": "warp",
       "env": {
         "NATS_URL": "nats://<EXTERNAL-IP>:4222"
       }
@@ -96,7 +96,7 @@ Access the NATS monitoring endpoint:
 
 ```bash
 # Port forward for local access
-kubectl port-forward svc/nats 8222:8222 -n nats-mcp
+kubectl port-forward svc/nats 8222:8222 -n loom
 
 # Then open http://localhost:8222
 ```
@@ -112,13 +112,13 @@ Endpoints:
 ### Check NATS logs
 
 ```bash
-kubectl logs -f deployment/nats -n nats-mcp
+kubectl logs -f deployment/nats -n loom
 ```
 
 ### Verify JetStream is enabled
 
 ```bash
-kubectl exec -it statefulset/nats -n nats-mcp -- nats-server --help | grep jetstream
+kubectl exec -it statefulset/nats -n loom -- nats-server --help | grep jetstream
 ```
 
 ### Test connection from inside cluster
@@ -126,7 +126,7 @@ kubectl exec -it statefulset/nats -n nats-mcp -- nats-server --help | grep jetst
 ```bash
 kubectl run nats-test --rm -it --image=natsio/nats-box -- sh
 # Inside container:
-nats pub test "hello" -s nats://nats.nats-mcp:4222
+nats pub test "hello" -s nats://nats.loom:4222
 ```
 
 ## File Structure

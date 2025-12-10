@@ -1,11 +1,11 @@
-# Docker Compose for NATS MCP Server Development
+# Docker Compose for Loom Warp Development
 # Brings up NATS with JetStream for local testing
 
 services:
   # NATS Server with JetStream
   nats:
     image: nats:2.10-alpine
-    container_name: nats-mcp-server
+    container_name: loom-warp
     command:
       - "-js"                    # Enable JetStream
       - "-sd"                    # Store directory
@@ -39,4 +39,4 @@ volumes:
 # Network configuration
 networks:
   default:
-    name: nats-mcp-network
+    name: loom-network

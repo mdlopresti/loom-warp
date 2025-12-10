@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/nats-mcp-server/schemas/mcp-config.schema.json",
-  "title": "NATS MCP Server Configuration",
-  "description": "Configuration schema for the NATS MCP Server project-level settings",
+  "$id": "https://github.com/mdlopresti/loom-warp/schemas/mcp-config.schema.json",
+  "title": "Loom Warp Configuration",
+  "description": "Configuration schema for Loom Warp project-level settings",
   "type": "object",
   "properties": {
     "namespace": {

@@ -1,27 +1,27 @@
-# ArgoCD Application for NATS MCP Server (Warp)
+# ArgoCD Application for Loom Warp
 # Deploy this to your ArgoCD namespace to enable GitOps
 #
 # Current deployment status:
-#   - Namespace: nats-mcp
-#   - NATS ClusterIP: nats.nats-mcp.svc:4222
+#   - Namespace: loom
+#   - NATS ClusterIP: nats.loom.svc:4222
 #   - NATS External: 192.168.7.16:4222 (LoadBalancer)
 #   - JetStream: Enabled with 10Gi storage
 #
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nats-mcp
+  name: loom-warp
   namespace: argocd
 spec:
   project: default
   source:
     # Gitea repository (private self-hosted)
-    repoURL: https://gitea.vilo.network/ViLoHouse/nats-mcp-server.git
+    repoURL: https://gitea.vilo.network/ViLoHouse/loom-warp.git
     targetRevision: main
     path: config
   destination:
     server: https://kubernetes.default.svc
-    namespace: nats-mcp
+    namespace: loom
   syncPolicy:
     automated:
       selfHeal: true
@@ -33,12 +33,12 @@ spec:
 # apiVersion: v1
 # kind: Secret
 # metadata:
-#   name: gitea-nats-mcp-server
+#   name: gitea-loom-warp
 #   namespace: argocd
 #   labels:
 #     argocd.argoproj.io/secret-type: repository
 # stringData:
 #   type: git
-#   url: https://gitea.vilo.network/ViLoHouse/nats-mcp-server.git
+#   url: https://gitea.vilo.network/ViLoHouse/loom-warp.git
 #   username: <gitea-username>
 #   password: <gitea-token>

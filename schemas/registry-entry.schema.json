@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/nats-mcp-server/schemas/registry-entry.schema.json",
-  "title": "NATS MCP Agent Registry Entry",
-  "description": "Schema for agent registry entries in the distributed NATS MCP system",
+  "$id": "https://github.com/mdlopresti/loom-warp/schemas/registry-entry.schema.json",
+  "title": "Loom Warp Agent Registry Entry",
+  "description": "Schema for agent registry entries in the distributed Loom system",
   "type": "object",
   "properties": {
     "guid": {

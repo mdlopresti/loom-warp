@@ -98,5 +98,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Work queue usage examples
 - Deployment guide for Kubernetes and Docker
 
-[Unreleased]: https://github.com/mlopresti/nats-mcp-server/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/mlopresti/nats-mcp-server/releases/tag/v1.0.0
+[Unreleased]: https://github.com/mdlopresti/loom-warp/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/mdlopresti/loom-warp/releases/tag/v1.0.0

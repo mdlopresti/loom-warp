@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * NATS MCP Server - Main entry point
+ * Loom Warp - Main entry point
  *
  * A generalized MCP server for agent-to-agent communication via NATS JetStream.
  * Supports configurable channels, project namespace isolation, and message persistence.
@@ -68,7 +68,7 @@ async function initialize(): Promise<void> {
   // Configure logger based on config
   configureLogger(config.logging.level, config.logging.format);
 
-  logger.info('NATS MCP Server initializing', {
+  logger.info('Loom Warp initializing', {
     namespace: config.namespace,
     projectPath: config.projectPath,
   });
@@ -176,8 +176,8 @@ async function runServer(): Promise<void> {
   // Create MCP server
   const server = new Server(
     {
-      name: 'nats-mcp-server',
-      version: '1.0.0',
+      name: 'loom-warp',
+      version: '1.2.0',
     },
     {
       capabilities: {
