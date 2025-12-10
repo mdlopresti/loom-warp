@@ -170,9 +170,20 @@ export async function listRegistryEntries(
   logger.debug('listRegistryEntries called - using fresh bucket view', { bucketName: currentBucketName });
 
   try {
-    const keys = await bucket.keys();
+    // IMPORTANT: Collect all keys first before calling kv.get()
+    // The NATS.js KV keys() async iterator gets corrupted/terminated if you call
+    // kv.get() while iterating. This is a known issue with the nats.js library.
+    // See: https://github.com/nats-io/nats.js/issues - iterator and concurrent operations
+    const keyIterator = await bucket.keys();
+    const keyArray: string[] = [];
+    for await (const key of keyIterator) {
+      keyArray.push(key);
+    }
 
-    for await (const key of keys) {
+    logger.debug('Collected keys from registry', { keyCount: keyArray.length });
+
+    // Now safely iterate over the collected keys
+    for (const key of keyArray) {
       try {
         const entry = await getRegistryEntry(key);
         if (entry) {
