@@ -7,7 +7,6 @@ import { hostname } from 'os';
 import { handleRegisterAgent, handleGetAgentInfo, handleDiscoverAgents, handleUpdatePresence, handleDeregisterAgent } from './registry.js';
 import type { SessionState, ResolvedConfig, RegistryEntry } from '../types.js';
 import * as kv from '../kv.js';
-import * as registry from '../registry.js';
 import * as heartbeat from '../heartbeat.js';
 import * as inbox from '../inbox.js';
 
