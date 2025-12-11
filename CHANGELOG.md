@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.3.0-beta] - 2025-12-11
+## [0.1.0] - 2025-12-11
 
 ### Status: Beta Release
 
@@ -59,7 +59,7 @@ This release marks the transition from Alpha to Beta. Core functionality has bee
 - NATS clustering not yet tested
 - Rapid concurrent publishes may have slight ordering variations
 
-## [1.0.0] - 2025-12-08
+## [0.0.1] - 2025-12-08
 
 ### Added
 - NATS MCP Server core implementation
@@ -127,6 +127,6 @@ This release marks the transition from Alpha to Beta. Core functionality has bee
 - Work queue usage examples
 - Deployment guide for Kubernetes and Docker
 
-[Unreleased]: https://github.com/mdlopresti/loom-warp/compare/v1.3.0-beta...HEAD
-[1.3.0-beta]: https://github.com/mdlopresti/loom-warp/compare/v1.0.0...v1.3.0-beta
-[1.0.0]: https://github.com/mdlopresti/loom-warp/releases/tag/v1.0.0
+[Unreleased]: https://github.com/mdlopresti/loom-warp/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/mdlopresti/loom-warp/compare/v0.0.1...v0.1.0
+[0.0.1]: https://github.com/mdlopresti/loom-warp/releases/tag/v0.0.1

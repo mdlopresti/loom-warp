@@ -393,6 +393,68 @@ NATS_PASS=mypassword
 
 URL credentials take precedence over environment variables. Special characters in passwords should be URL-encoded (e.g., `@` → `%40`, `/` → `%2F`).
 
+### WebSocket Transport
+
+Warp supports WebSocket connections for environments where raw TCP is not available (e.g., through CDN proxies like Cloudflare):
+
+```bash
+# WebSocket (for proxied connections)
+NATS_URL=wss://myuser:mypassword@nats.example.com
+
+# WebSocket without TLS (local testing only)
+NATS_URL=ws://localhost:8080
+```
+
+The transport is auto-detected from the URL scheme:
+- `nats://` or `tls://` → TCP connection
+- `ws://` or `wss://` → WebSocket connection
+
+## GitHub Actions
+
+Warp can connect to NATS from GitHub Actions runners using WebSocket transport. This enables spinning up ephemeral agents that can claim work from the queue.
+
+### Setup
+
+1. **Add repository secret** `NATS_URL` with your WebSocket URL:
+   ```
+   wss://github-agent:password@nats.example.com
+   ```
+
+2. **Use the agent workflow** (`.github/workflows/agent.yml`):
+   - Manually trigger via "Actions" → "Loom Agent" → "Run workflow"
+   - The workflow validates NATS connectivity through Cloudflare/proxy
+
+### Example: Full Agent Workflow
+
+To run a complete Claude Code agent in GitHub Actions:
+
+```yaml
+- name: Install Claude Code
+  run: npm install -g @anthropic-ai/claude-code
+
+- name: Configure MCP
+  run: |
+    mkdir -p ~/.claude
+    cat > ~/.claude/mcp.json << 'EOF'
+    {
+      "mcpServers": {
+        "loom-warp": {
+          "type": "stdio",
+          "command": "docker",
+          "args": ["run", "-i", "--rm", "-e", "NATS_URL", "ghcr.io/mdlopresti/loom-warp:latest"]
+        }
+      }
+    }
+    EOF
+
+- name: Run Agent
+  env:
+    NATS_URL: ${{ secrets.NATS_URL }}
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  run: |
+    claude-code --print "Register as github-runner, claim typescript work, and execute it"
+```
+
 ## Cross-Computer Setup
 
 To enable agents on different computers to communicate:

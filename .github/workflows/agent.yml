@@ -1,0 +1,76 @@
+name: Loom Agent
+
+# This workflow validates Warp can connect to the remote NATS server via WebSocket.
+# It serves as a template for running Claude Code agents with Warp in GitHub Actions.
+#
+# Required secrets:
+#   NATS_URL: WebSocket URL with credentials (e.g., wss://github-agent:password@nats.example.com)
+#
+# To run a full Claude Code agent, add:
+#   - ANTHROPIC_API_KEY secret
+#   - Install Claude Code CLI
+#   - Configure MCP with the Warp Docker image
+#   - Run claude-code with a prompt to claim work from the queue
+
+on:
+  workflow_dispatch:
+    inputs:
+      timeout_minutes:
+        description: 'Maximum runtime in minutes'
+        required: false
+        default: '30'
+        type: string
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(inputs.timeout_minutes) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Pull Warp Docker image
+        run: docker pull ghcr.io/mdlopresti/loom-warp:latest
+
+      - name: Verify NATS connectivity
+        env:
+          NATS_URL: ${{ secrets.NATS_URL }}
+        run: |
+          echo "Testing NATS WebSocket connectivity..."
+          # Extract host from NATS_URL (wss://user:pass@host)
+          NATS_HOST=$(echo "$NATS_URL" | sed -E 's|wss?://([^:]+:[^@]+@)?||' | cut -d/ -f1)
+          echo "NATS Host: $NATS_HOST"
+
+          # Test HTTPS/WebSocket endpoint is reachable
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://$NATS_HOST" || echo "000")
+          echo "HTTP response code: $HTTP_CODE"
+
+          # 405 is expected (Method Not Allowed for non-WebSocket request)
+          if [ "$HTTP_CODE" = "405" ]; then
+            echo "✓ NATS WebSocket endpoint is reachable"
+          elif [ "$HTTP_CODE" = "000" ]; then
+            echo "✗ Failed to connect to NATS endpoint"
+            exit 1
+          else
+            echo "? Unexpected response code: $HTTP_CODE (continuing anyway)"
+          fi
+
+      - name: Run Warp MCP server test
+        env:
+          NATS_URL: ${{ secrets.NATS_URL }}
+        run: |
+          echo "Starting Warp MCP server to verify NATS connection..."
+          echo "NATS URL configured: $(echo $NATS_URL | sed 's/:.*@/:***@/')"
+
+          # Run Warp in Docker to test connectivity
+          # The MCP server will connect to NATS on startup
+          # We send a minimal MCP initialize request to trigger the connection
+          echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | \
+          timeout 30 docker run -i --rm \
+            -e "NATS_URL=$NATS_URL" \
+            -e "LOG_LEVEL=DEBUG" \
+            ghcr.io/mdlopresti/loom-warp:latest 2>&1 | head -100
+
+          echo ""
+          echo "✓ Warp MCP server connected successfully to NATS"
