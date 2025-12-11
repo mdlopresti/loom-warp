@@ -358,12 +358,40 @@ mcp__loom__discard_dead_letter_item({ itemId: "550e8400-..." })
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NATS_URL` | `nats://localhost:4222` | NATS server connection URL |
+| `NATS_URL` | `nats://localhost:4222` | NATS server connection URL (supports credentials in URL) |
+| `NATS_USER` | (none) | Username for NATS authentication (fallback if not in URL) |
+| `NATS_PASS` | (none) | Password for NATS authentication (fallback if not in URL) |
 | `MCP_PROJECT_PATH` | Current directory | Override project path for config discovery |
 | `LOG_LEVEL` | `INFO` | Logging level (DEBUG, INFO, WARN, ERROR) |
 | `WORKQUEUE_ACK_TIMEOUT` | `300000` | Work acknowledgment timeout (ms) |
 | `WORKQUEUE_MAX_ATTEMPTS` | `3` | Max delivery attempts before DLQ |
 | `WORKQUEUE_DLQ_TTL` | `604800000` | Dead letter queue TTL (ms, default 7 days) |
+
+### NATS Authentication
+
+Authentication is **optional**. For local development, just use `nats://localhost:4222`.
+
+For production NATS servers with authentication enabled:
+
+**Option 1: Credentials in URL (recommended)**
+```bash
+NATS_URL=nats://myuser:mypassword@nats.example.com:4222
+```
+
+**Option 2: Separate environment variables**
+```bash
+NATS_URL=nats://nats.example.com:4222
+NATS_USER=myuser
+NATS_PASS=mypassword
+```
+
+**Option 3: Mixed (user in URL, password in env)**
+```bash
+NATS_URL=nats://myuser@nats.example.com:4222
+NATS_PASS=mypassword
+```
+
+URL credentials take precedence over environment variables. Special characters in passwords should be URL-encoded (e.g., `@` → `%40`, `/` → `%2F`).
 
 ## Cross-Computer Setup
 
@@ -460,6 +488,17 @@ Error: Invalid channel name
 ```
 
 **Solution**: Use lowercase alphanumeric with hyphens only (`my-channel`, `sprint-1`).
+
+### NATS Authorization Failed
+
+```
+Error: AUTHORIZATION_VIOLATION
+```
+
+**Solution**: Check your NATS credentials:
+- Verify `NATS_USER` and `NATS_PASS` are correct
+- If using URL credentials, ensure special characters are URL-encoded
+- Confirm the user exists on the NATS server
 
 ## Development
 

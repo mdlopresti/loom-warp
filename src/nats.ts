@@ -7,10 +7,61 @@ import {
   type NatsConnection,
   type JetStreamClient,
   type JetStreamManager,
+  type ConnectionOptions,
 } from 'nats';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('nats-connection');
+
+/**
+ * Parsed NATS URL components
+ */
+interface ParsedNatsUrl {
+  /** Server URL without credentials (e.g., "nats://host:4222") */
+  server: string;
+  /** Username if present in URL */
+  user?: string;
+  /** Password if present in URL */
+  pass?: string;
+}
+
+/**
+ * Parse a NATS URL that may contain credentials
+ *
+ * Supports formats:
+ * - nats://host:port (no auth)
+ * - nats://user:pass@host:port (with auth)
+ * - nats://user@host:port (user only, password from env)
+ *
+ * @param url - NATS URL to parse
+ * @returns Parsed components with server URL and optional credentials
+ */
+export function parseNatsUrl(url: string): ParsedNatsUrl {
+  try {
+    // Handle nats:// protocol by temporarily replacing with http://
+    // since URL class doesn't recognize nats://
+    const normalizedUrl = url.replace(/^nats:\/\//, 'http://');
+    const parsed = new URL(normalizedUrl);
+
+    // Reconstruct the server URL without credentials
+    const server = `nats://${parsed.host}`;
+
+    const result: ParsedNatsUrl = { server };
+
+    // Extract credentials if present
+    if (parsed.username) {
+      result.user = decodeURIComponent(parsed.username);
+    }
+    if (parsed.password) {
+      result.pass = decodeURIComponent(parsed.password);
+    }
+
+    return result;
+  } catch {
+    // If URL parsing fails, return as-is (e.g., for simple "localhost:4222")
+    return { server: url };
+  }
+}
 
 /** Connection state */
 interface ConnectionState {
@@ -54,6 +105,13 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Connect to NATS server with retry logic
+ *
+ * Supports optional authentication via:
+ * 1. Credentials in URL: nats://user:pass@host:port
+ * 2. Environment variables: NATS_USER and NATS_PASS
+ *
+ * Authentication is optional - if no credentials are provided,
+ * connects without authentication (suitable for local development).
  */
 export async function connectToNats(natsUrl: string): Promise<void> {
   if (state.connection) {
@@ -75,6 +133,32 @@ export async function connectToNats(natsUrl: string): Promise<void> {
 
   state.isConnecting = true;
 
+  // Parse URL and extract credentials if present
+  const parsed = parseNatsUrl(natsUrl);
+
+  // Resolve credentials: URL takes precedence, then env vars
+  const user = parsed.user ?? process.env['NATS_USER'];
+  const pass = parsed.pass ?? process.env['NATS_PASS'];
+
+  // Build connection options
+  const connectOpts: ConnectionOptions = {
+    servers: [parsed.server],
+    reconnect: true,
+    maxReconnectAttempts: -1, // Unlimited reconnects
+    reconnectTimeWait: 1000,
+    timeout: 10000,
+  };
+
+  // Add credentials only if provided (auth is optional)
+  if (user) {
+    connectOpts.user = user;
+    if (pass) {
+      connectOpts.pass = pass;
+    }
+  }
+
+  const hasAuth = !!user;
+
   for (let attempt = 0; attempt < RETRY_CONFIG.maxRetries; attempt++) {
     if (state.isShuttingDown) {
       state.isConnecting = false;
@@ -82,15 +166,13 @@ export async function connectToNats(natsUrl: string): Promise<void> {
     }
 
     try {
-      logger.info('Connecting to NATS', { url: natsUrl, attempt: attempt + 1 });
-
-      state.connection = await connect({
-        servers: [natsUrl],
-        reconnect: true,
-        maxReconnectAttempts: -1, // Unlimited reconnects
-        reconnectTimeWait: 1000,
-        timeout: 10000,
+      logger.info('Connecting to NATS', {
+        url: parsed.server,
+        attempt: attempt + 1,
+        authenticated: hasAuth,
       });
+
+      state.connection = await connect(connectOpts);
 
       // Set up connection event handlers
       setupConnectionHandlers(state.connection);
@@ -99,7 +181,10 @@ export async function connectToNats(natsUrl: string): Promise<void> {
       state.jetStreamClient = state.connection.jetstream();
       state.jetStreamManager = await state.connection.jetstreamManager();
 
-      logger.info('Connected to NATS with JetStream', { url: natsUrl });
+      logger.info('Connected to NATS with JetStream', {
+        url: parsed.server,
+        authenticated: hasAuth,
+      });
       state.isConnecting = false;
       return;
     } catch (err) {
@@ -119,9 +204,12 @@ export async function connectToNats(natsUrl: string): Promise<void> {
   }
 
   state.isConnecting = false;
+  const authHint = hasAuth
+    ? ' Check that credentials are correct.'
+    : '';
   throw new Error(
     `Failed to connect to NATS after ${RETRY_CONFIG.maxRetries} attempts. ` +
-      `Make sure NATS server with JetStream is running at ${natsUrl}. ` +
+      `Make sure NATS server with JetStream is running at ${parsed.server}.${authHint} ` +
       'Start NATS with: nats-server -js'
   );
 }
