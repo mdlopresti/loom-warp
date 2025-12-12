@@ -63,12 +63,9 @@ docker pull ghcr.io/mdlopresti/loom-warp:latest
 docker build -t loom-warp:latest .
 ```
 
-### NPM (Post-V1)
-
-> **Note**: NPM publishing (`@loom/warp`) is planned for after the V1 release. For now, use Docker.
+### NPM
 
 ```bash
-# Coming post-V1
 npm install -g @loom/warp
 ```
 
@@ -76,7 +73,7 @@ npm install -g @loom/warp
 
 ### Claude Code MCP Configuration
 
-Add to your `~/.claude.json` (or `~/.claude/mcp.json`):
+Add to your Claude Code settings (`~/.claude/settings.json`):
 
 ```json
 {
@@ -146,212 +143,33 @@ If no configuration is provided, these default channels are created:
 - **parallel-work**: Coordination for parallel work among agents
 - **errors**: Error reporting and troubleshooting
 
-## Tools Reference
+## MCP Tools
 
-### Identity Tools
+Warp provides 17 MCP tools organized into categories:
 
-#### `set_handle`
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| **Identity** | `set_handle`, `get_my_handle` | Set/get your agent name for messages |
+| **Channels** | `list_channels`, `send_message`, `read_messages` | Topic-based pub/sub messaging |
+| **Registry** | `register_agent`, `discover_agents`, `get_agent_info`, `update_presence`, `deregister_agent` | Agent discovery and presence |
+| **Direct Messages** | `send_direct_message`, `read_direct_messages` | Agent-to-agent communication |
+| **Work Queues** | `broadcast_work_offer`, `claim_work` | Capability-based work distribution |
+| **Dead Letter** | `list_dead_letter_items`, `retry_dead_letter_item`, `discard_dead_letter_item` | Handle failed work items |
 
-Set your agent identity for messages:
-
-```
-mcp__loom__set_handle("project-manager")
-→ Handle set to: project-manager
-```
-
-#### `get_my_handle`
-
-Get your current handle:
+Each tool includes detailed descriptions visible in your MCP client. Common usage:
 
 ```
-mcp__loom__get_my_handle()
-→ Your current handle: project-manager
-```
+# Register and discover
+register_agent({ agentType: "developer", capabilities: ["typescript"] })
+discover_agents({ capability: "code-review" })
 
-### Channel Tools
+# Communicate
+send_message({ channel: "planning", message: "Starting sprint 5" })
+send_direct_message({ recipientGuid: "...", message: "Please review PR #42" })
 
-#### `list_channels`
-
-List available channels:
-
-```
-mcp__loom__list_channels()
-→ Available channels:
-  - **planning**: Sprint planning and prioritization
-  - **implementation**: Development work coordination
-  - **review**: Code review discussions
-```
-
-#### `send_message`
-
-Send a message to a channel:
-
-```
-mcp__loom__send_message({ channel: "planning", message: "Starting Sprint 5 planning." })
-→ Message sent to #planning by project-manager
-```
-
-#### `read_messages`
-
-Read recent messages from a channel:
-
-```
-mcp__loom__read_messages({ channel: "planning", limit: 10 })
-→ Messages from #planning:
-  [2025-01-15T10:00:00Z] **project-manager**: Starting Sprint 5 planning.
-  [2025-01-15T10:05:00Z] **analyst**: Prioritizing auth requirements.
-```
-
-### Registry Tools
-
-#### `register_agent`
-
-Register this agent in the global registry:
-
-```
-mcp__loom__register_agent({
-  agentType: "developer",
-  capabilities: ["typescript", "testing"],
-  visibility: "project-only"
-})
-→ Agent registered successfully!
-  - GUID: 550e8400-e29b-41d4-a716-446655440000
-  - Heartbeat: active (60s interval)
-```
-
-#### `discover_agents`
-
-Find other agents in the registry:
-
-```
-mcp__loom__discover_agents({ capability: "typescript", status: "online" })
-→ Found 2 agents:
-  **code-reviewer** (reviewer)
-  - GUID: 123e4567-e89b-12d3-a456-426614174000
-  - Status: online
-  - Capabilities: [typescript, code-review]
-```
-
-#### `get_agent_info`
-
-Get detailed information about a specific agent:
-
-```
-mcp__loom__get_agent_info({ guid: "123e4567-e89b-12d3-a456-426614174000" })
-→ Agent: code-reviewer
-  | Field | Value |
-  |-------|-------|
-  | Type | reviewer |
-  | Status | online |
-  | Capabilities | typescript, code-review |
-```
-
-#### `update_presence`
-
-Update your agent's presence information:
-
-```
-mcp__loom__update_presence({ status: "busy", currentTaskCount: 3 })
-→ Presence updated: online → busy
-```
-
-#### `deregister_agent`
-
-Deregister this agent from the registry:
-
-```
-mcp__loom__deregister_agent()
-→ Agent deregistered. Heartbeat stopped.
-```
-
-### Direct Messaging Tools
-
-#### `send_direct_message`
-
-Send a direct message to another agent:
-
-```
-mcp__loom__send_direct_message({
-  recipientGuid: "123e4567-e89b-12d3-a456-426614174000",
-  message: "Please review PR #42"
-})
-→ Message sent to code-reviewer
-```
-
-#### `read_direct_messages`
-
-Read messages from your inbox:
-
-```
-mcp__loom__read_direct_messages({ limit: 5 })
-→ Direct Messages (2 messages):
-  From: project-manager | Type: text | Time: 10:00:00Z
-  "Please review PR #42 when you have time."
-```
-
-### Work Distribution Tools
-
-#### `broadcast_work_offer`
-
-Publish work to a capability-based work queue:
-
-```
-mcp__loom__broadcast_work_offer({
-  taskId: "feature-123",
-  description: "Implement user authentication",
-  requiredCapability: "typescript",
-  priority: 7
-})
-→ Work published to typescript queue
-```
-
-#### `claim_work`
-
-Claim work from a capability-based work queue:
-
-```
-mcp__loom__claim_work({ capability: "typescript", timeout: 5000 })
-→ Work claimed:
-  Task ID: feature-123
-  Description: Implement user authentication
-  Priority: 7
-  Offered by: project-manager
-```
-
-### Dead Letter Queue Tools
-
-#### `list_dead_letter_items`
-
-List failed work items:
-
-```
-mcp__loom__list_dead_letter_items({ limit: 10 })
-→ Dead Letter Queue (1 item):
-  ID: 550e8400-...
-  Task: feature-123
-  Attempts: 3
-  Reason: Worker timeout
-```
-
-#### `retry_dead_letter_item`
-
-Move a failed work item back to the work queue:
-
-```
-mcp__loom__retry_dead_letter_item({
-  itemId: "550e8400-...",
-  resetAttempts: true
-})
-→ Work item retried. Moved back to queue.
-```
-
-#### `discard_dead_letter_item`
-
-Permanently remove a failed work item:
-
-```
-mcp__loom__discard_dead_letter_item({ itemId: "550e8400-..." })
-→ Work item discarded.
+# Work distribution
+broadcast_work_offer({ taskId: "task-1", description: "Fix bug", requiredCapability: "typescript" })
+claim_work({ capability: "typescript" })
 ```
 
 ## Environment Variables
@@ -581,11 +399,12 @@ npm test
 npm run test:coverage
 ```
 
-## Related Components
+## Related
 
-- **[Loom](../README.md)** — The complete multi-agent infrastructure
-- **[Weft](../coordinator-system/README.md)** — Coordinator service for intelligent routing
-- **[Shuttle](../coordinator-system/shuttle/README.md)** — CLI for fleet management
+- [Loom](https://github.com/mdlopresti/loom) — Multi-agent infrastructure
+- [Weft](https://github.com/mdlopresti/loom-weft) — Work coordinator
+- [Pattern](https://github.com/mdlopresti/loom-pattern) — Agent memory
+- [Shuttle](https://github.com/mdlopresti/loom-shuttle) — Fleet management CLI
 
 ## License
 
